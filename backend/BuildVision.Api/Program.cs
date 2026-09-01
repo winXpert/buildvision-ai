@@ -7,6 +7,7 @@ builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(OpenA
 builder.Services.AddSingleton<IDesignStore, FileDesignStore>();
 builder.Services.AddSingleton<IImageProcessingService, ImageProcessingService>();
 builder.Services.AddHttpClient<IImageGenerationService, OpenAiImageGenerationService>();
+builder.Services.AddHttpClient<IDesignSuggestionService, DesignSuggestionService>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -43,15 +44,14 @@ app.UseStaticFiles();
 
 app.MapControllers();
 
-app.MapGet("/api/health", (IImageGenerationService generation) => Results.Ok(new
+app.MapGet("/api/health", (IImageGenerationService generation, IDesignSuggestionService suggestions) => Results.Ok(new
 {
     status = "ok",
     product = "BuildVision AI",
-    aiConfigured = generation.IsConfigured,
+    aiConfigured = generation.IsConfigured && suggestions.IsConfigured,
     mode = generation.IsConfigured ? "openai" : "demo"
 }));
 
-// SPA fallback for Angular client-side routes
 app.MapFallbackToFile("index.html");
 
 app.Run();

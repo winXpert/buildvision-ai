@@ -189,9 +189,75 @@ textarea {
   margin-top: 0.4rem;
 }
 
+.cta--secondary {
+  background: transparent;
+  color: #e8a45a;
+  border: 1px solid rgba(232, 164, 90, 0.7);
+  margin-bottom: 0.75rem;
+}
+
 .cta:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+.variations {
+  margin-top: 0.75rem;
+}
+
+.suggest {
+  margin-top: 1.75rem;
+}
+
+.suggest__summary {
+  margin: 0.4rem 0 0.6rem;
+  color: #d5dce2;
+  line-height: 1.45;
+}
+
+.suggest__insight {
+  margin: 0 0 1rem;
+  color: #9aa3ab;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.options {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.option {
+  text-align: left;
+  background: #0d1115;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.option strong {
+  font-family: "Syne", sans-serif;
+  color: #f0f3f6;
+}
+
+.option span {
+  color: #9aa3ab;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.option--active {
+  border-color: #e8a45a;
+  background: rgba(232, 164, 90, 0.08);
+}
+
+.suggest__chosen {
+  margin: 1rem 0 0;
+  color: #cfd6dc;
+  font-size: 0.9rem;
 }
 
 .error {

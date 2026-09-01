@@ -7,6 +7,7 @@
 **/.angular/
 **/wwwroot/
 /publish/
+/publish-new/
 *.user
 *.suo
 .env

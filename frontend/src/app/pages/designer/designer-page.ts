@@ -4,6 +4,8 @@ import { AreaSelectorComponent } from '../../components/area-selector/area-selec
 import {
   DesignApiService,
   DesignJob,
+  DesignSuggestionOption,
+  DesignSuggestionResponse,
   SelectionBox
 } from '../../services/design-api.service';
 
@@ -18,52 +20,18 @@ export class DesignerPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(DesignApiService);
 
   projectName = 'Rooftop Terrace';
-  prompt = '';
+  question = 'What can we make/design in this selected area so that it looks beautiful?';
   variations = 2;
   previewUrl = '';
   selectedFile: File | null = null;
   selection: SelectionBox | null = null;
 
-  readonly stylePresets = [
-    {
-      id: 'minimal',
-      name: 'Minimal Modern',
-      blurb: 'Clean shade + stone floor + timber accents',
-      prompt:
-        'Redesign only the right-side rooftop terrace into a Minimal Modern outdoor living space. ' +
-        'Add a slim black-metal pergola with light shade fabric, warm grey outdoor stone flooring, ' +
-        'a low built-in concrete bench with neutral cushions, sparse tall planters, wooden slat wall paneling on part of the white wall, ' +
-        'subtle recessed LED lighting, and keep the existing door fully accessible. ' +
-        'Do not change the left railing, staircase, or upper roof structure. Photorealistic, match existing building perspective and lighting.'
-    },
-    {
-      id: 'kerala',
-      name: 'Kerala Tropical',
-      blurb: 'Pergola, greenery, warm wood, soft evening light',
-      prompt:
-        'Redesign only the right-side rooftop terrace into a Kerala Tropical outdoor courtyard. ' +
-        'Add a timber pergola with climbing greenery and soft filtered shade, terracotta or laterite-toned outdoor flooring, ' +
-        'built-in seating with cushions, dense tropical planters (areca, bamboo, palms), a small water bowl fountain against the wall, ' +
-        'warm festoon or wall-wash lights, and relocate the outdoor sink into a neat utility niche. ' +
-        'Keep the existing door accessible. Do not alter the left railing, stairs, or upper tower. Photorealistic Indian residential architecture.'
-    },
-    {
-      id: 'resort',
-      name: 'Luxury Resort',
-      blurb: 'Lounge deck, canopy, feature wall, ambient glow',
-      prompt:
-        'Redesign only the right-side rooftop terrace into a Luxury Resort lounge deck. ' +
-        'Add an elegant tensile canopy or pavilion shade, premium wood-look decking, outdoor sofa lounge set with coffee table, ' +
-        'a feature wall with textured stone or vertical garden, sculptural planters, a slim water feature, ' +
-        'and soft golden ambient lighting for evening mood. Keep circulation to the right-side door clear. ' +
-        'Preserve the left balcony railing, staircase, and upper roof pavilion. Photorealistic, high-end residential terrace.'
-    }
-  ] as const;
-
-  readonly activeStyleId = signal<string | null>(null);
-  readonly loading = signal(false);
+  readonly loadingSuggest = signal(false);
+  readonly loadingGenerate = signal(false);
   readonly aiMode = signal<'unknown' | 'openai' | 'demo'>('unknown');
   readonly error = signal<string | null>(null);
+  readonly suggestions = signal<DesignSuggestionResponse | null>(null);
+  readonly selectedOptionId = signal<string | null>(null);
   readonly result = signal<DesignJob | null>(null);
   readonly history = signal<DesignJob[]>([]);
   readonly selectedResultIndex = signal(0);
@@ -91,37 +59,79 @@ export class DesignerPageComponent implements OnInit, OnDestroy {
     if (this.objectUrl) URL.revokeObjectURL(this.objectUrl);
     this.objectUrl = URL.createObjectURL(file);
     this.previewUrl = this.objectUrl;
-    this.result.set(null);
-    this.error.set(null);
-    this.selection = null;
+    this.resetAnalysis();
   }
 
   onSelectionChange(selection: SelectionBox | null): void {
     this.selection = selection;
+    // New region → clear prior options so user re-asks for this area
+    this.suggestions.set(null);
+    this.selectedOptionId.set(null);
+    this.result.set(null);
+    this.error.set(null);
   }
 
-  applyStyle(styleId: string): void {
-    const style = this.stylePresets.find((s) => s.id === styleId);
-    if (!style) return;
-    this.activeStyleId.set(style.id);
-    this.prompt = style.prompt;
-    this.projectName = `Rooftop — ${style.name}`;
+  selectedOption(): DesignSuggestionOption | null {
+    const id = this.selectedOptionId();
+    const list = this.suggestions()?.options ?? [];
+    return list.find((o) => o.id === id) ?? null;
   }
 
-  generate(): void {
-    if (!this.selectedFile || !this.prompt.trim()) {
-      this.error.set('Upload an image and enter a design prompt.');
+  askSuggestions(): void {
+    if (!this.selectedFile) {
+      this.error.set('Upload a construction image first.');
+      return;
+    }
+    if (!this.selection) {
+      this.error.set('Drag on the image to select the area you want to redesign.');
       return;
     }
 
-    this.loading.set(true);
+    this.loadingSuggest.set(true);
+    this.error.set(null);
+    this.result.set(null);
+    this.selectedOptionId.set(null);
+
+    this.api
+      .suggest({
+        image: this.selectedFile,
+        question: this.question.trim() || 'What can we design in this selected area so that it looks beautiful?',
+        selection: this.selection
+      })
+      .subscribe({
+        next: (res) => {
+          this.suggestions.set(res);
+          if (res.options.length) {
+            this.selectedOptionId.set(res.options[0].id);
+          }
+          this.loadingSuggest.set(false);
+        },
+        error: (err) => {
+          this.loadingSuggest.set(false);
+          this.error.set(err?.error?.error || err?.message || 'Could not analyze the selected area.');
+        }
+      });
+  }
+
+  chooseOption(option: DesignSuggestionOption): void {
+    this.selectedOptionId.set(option.id);
+  }
+
+  generate(): void {
+    const option = this.selectedOption();
+    if (!this.selectedFile || !this.selection || !option) {
+      this.error.set('Select an area, get suggestions, then choose an option to generate.');
+      return;
+    }
+
+    this.loadingGenerate.set(true);
     this.error.set(null);
 
     this.api
       .generate({
         image: this.selectedFile,
-        prompt: this.prompt.trim(),
-        projectName: this.projectName.trim() || 'Untitled Project',
+        prompt: option.generatePrompt,
+        projectName: this.projectName.trim() || option.title,
         selection: this.selection,
         variations: this.variations
       })
@@ -130,11 +140,11 @@ export class DesignerPageComponent implements OnInit, OnDestroy {
           this.result.set(job);
           this.selectedResultIndex.set(0);
           this.comparePosition.set(50);
-          this.loading.set(false);
+          this.loadingGenerate.set(false);
           this.refreshHistory();
         },
         error: (err) => {
-          this.loading.set(false);
+          this.loadingGenerate.set(false);
           this.error.set(err?.error?.error || err?.message || 'Generation failed.');
         }
       });
@@ -171,7 +181,14 @@ export class DesignerPageComponent implements OnInit, OnDestroy {
     this.result.set(job);
     this.selectedResultIndex.set(0);
     this.previewUrl = this.fileUrl(job.originalImageUrl);
-    this.prompt = job.prompt;
     this.projectName = job.projectName;
+  }
+
+  private resetAnalysis(): void {
+    this.selection = null;
+    this.suggestions.set(null);
+    this.selectedOptionId.set(null);
+    this.result.set(null);
+    this.error.set(null);
   }
 }

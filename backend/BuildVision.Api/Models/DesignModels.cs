@@ -33,6 +33,7 @@ public sealed class OpenAiOptions
     public string ApiKey { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = "https://api.openai.com/v1";
     public string ImageEditModel { get; set; } = "dall-e-2";
+    public string VisionModel { get; set; } = "gpt-4o-mini";
     public int DefaultVariations { get; set; } = 2;
 }
 
@@ -44,4 +45,21 @@ public sealed class SelectionBox
     public double Height { get; set; }
     public double ImageWidth { get; set; }
     public double ImageHeight { get; set; }
+}
+
+public sealed class DesignSuggestionOption
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+    public string Title { get; set; } = string.Empty;
+    public string Explanation { get; set; } = string.Empty;
+    public string GeneratePrompt { get; set; } = string.Empty;
+}
+
+public sealed class DesignSuggestionResponse
+{
+    public string Summary { get; set; } = string.Empty;
+    public string RegionInsight { get; set; } = string.Empty;
+    public List<DesignSuggestionOption> Options { get; set; } = [];
+    public bool UsedDemoMode { get; set; }
+    public SelectionBox Selection { get; set; } = new();
 }

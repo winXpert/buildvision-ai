@@ -24,6 +24,21 @@ export interface DesignJob {
   createdAt: string;
 }
 
+export interface DesignSuggestionOption {
+  id: string;
+  title: string;
+  explanation: string;
+  generatePrompt: string;
+}
+
+export interface DesignSuggestionResponse {
+  summary: string;
+  regionInsight: string;
+  options: DesignSuggestionOption[];
+  usedDemoMode: boolean;
+  selection: SelectionBox;
+}
+
 export interface HealthStatus {
   status: string;
   product: string;
@@ -48,11 +63,23 @@ export class DesignApiService {
     return this.http.get<DesignJob>(`${this.base}/api/designs/${id}`);
   }
 
+  suggest(payload: {
+    image: File;
+    question: string;
+    selection: SelectionBox;
+  }): Observable<DesignSuggestionResponse> {
+    const form = new FormData();
+    form.append('image', payload.image);
+    form.append('question', payload.question);
+    form.append('selectionJson', JSON.stringify(payload.selection));
+    return this.http.post<DesignSuggestionResponse>(`${this.base}/api/designs/suggest`, form);
+  }
+
   generate(payload: {
     image: File;
     prompt: string;
     projectName: string;
-    selection: SelectionBox | null;
+    selection: SelectionBox;
     variations: number;
   }): Observable<DesignJob> {
     const form = new FormData();
@@ -60,9 +87,7 @@ export class DesignApiService {
     form.append('prompt', payload.prompt);
     form.append('projectName', payload.projectName);
     form.append('variations', String(payload.variations));
-    if (payload.selection) {
-      form.append('selectionJson', JSON.stringify(payload.selection));
-    }
+    form.append('selectionJson', JSON.stringify(payload.selection));
     return this.http.post<DesignJob>(`${this.base}/api/designs/generate`, form);
   }
 

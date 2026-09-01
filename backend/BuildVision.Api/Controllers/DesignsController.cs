@@ -12,17 +12,20 @@ public sealed class DesignsController : ControllerBase
     private readonly IDesignStore _store;
     private readonly IImageProcessingService _imageProcessing;
     private readonly IImageGenerationService _generation;
+    private readonly IDesignSuggestionService _suggestions;
     private readonly IWebHostEnvironment _env;
 
     public DesignsController(
         IDesignStore store,
         IImageProcessingService imageProcessing,
         IImageGenerationService generation,
+        IDesignSuggestionService suggestions,
         IWebHostEnvironment env)
     {
         _store = store;
         _imageProcessing = imageProcessing;
         _generation = generation;
+        _suggestions = suggestions;
         _env = env;
     }
 
@@ -38,6 +41,33 @@ public sealed class DesignsController : ControllerBase
     {
         var job = await _store.GetAsync(id, ct);
         return job is null ? NotFound() : Ok(ToDto(job));
+    }
+
+    [HttpPost("suggest")]
+    [RequestSizeLimit(40_000_000)]
+    public async Task<ActionResult<DesignSuggestionResponse>> Suggest(
+        [FromForm] IFormFile image,
+        [FromForm] string? question,
+        [FromForm] string selectionJson,
+        CancellationToken ct = default)
+    {
+        if (image is null || image.Length == 0)
+        {
+            return BadRequest(new { error = "Image is required." });
+        }
+
+        var selection = ParseSelection(selectionJson);
+        if (selection is null || selection.Width < 8 || selection.Height < 8)
+        {
+            return BadRequest(new { error = "A valid selected area is required. Draw a selection on the image first." });
+        }
+
+        var q = string.IsNullOrWhiteSpace(question)
+            ? "What can we design in this selected area so that it looks beautiful?"
+            : question.Trim();
+
+        var result = await _suggestions.SuggestAsync(image, selection, q, ct);
+        return Ok(result);
     }
 
     [HttpPost("generate")]
@@ -62,6 +92,11 @@ public sealed class DesignsController : ControllerBase
         }
 
         var selection = ParseSelection(selectionJson);
+        if (selection is null || selection.Width < 8 || selection.Height < 8)
+        {
+            return BadRequest(new { error = "Select an area on the image before generating a design." });
+        }
+
         var job = new DesignJob
         {
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Untitled Project" : projectName.Trim(),

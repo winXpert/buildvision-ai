@@ -169,8 +169,8 @@ public sealed class OpenAiImageGenerationService : IImageGenerationService
     private static string BuildConstructionPrompt(string userPrompt)
     {
         return
-            "You are an architectural visualization assistant. Edit only the masked region of this construction/building photo. " +
-            "Preserve the unmasked existing structure, perspective, lighting, and materials. " +
-            "Produce a photorealistic construction design. User request: " + userPrompt;
+            "You are an architectural visualization assistant. Edit ONLY the transparent/masked region of this construction photo. " +
+            "Preserve every unmasked pixel of the existing building: structure, perspective, lighting, materials, and surroundings. " +
+            "Blend the new design seamlessly into the selected area. Photorealistic. Design request: " + userPrompt;
     }
 }

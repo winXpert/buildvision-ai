@@ -32,30 +32,33 @@
         <span>Choose construction image</span>
       </label>
 
-      <h2>3. Style presets</h2>
-      <p class="hint">For the right-side terrace — pick a look, then select that area on the image.</p>
-      <div class="styles">
-        @for (style of stylePresets; track style.id) {
-          <button
-            type="button"
-            class="style"
-            [class.style--active]="activeStyleId() === style.id"
-            (click)="applyStyle(style.id)"
-          >
-            <strong>{{ style.name }}</strong>
-            <span>{{ style.blurb }}</span>
-          </button>
-        }
-      </div>
-
-      <h2>4. Design brief</h2>
+      <h2>3. Your question</h2>
+      <p class="hint">Select an area on the image, then ask what can be designed there.</p>
       <label>
-        What should AI build in the selected area?
-        <textarea [(ngModel)]="prompt" name="prompt" rows="6" placeholder="Choose a style preset or write your own…"></textarea>
+        Question
+        <textarea
+          [(ngModel)]="question"
+          name="question"
+          rows="4"
+          placeholder="What can we design in this selected area so that it looks beautiful?"
+        ></textarea>
       </label>
 
-      <label>
-        Variations
+      <button
+        class="cta cta--secondary"
+        type="button"
+        [disabled]="loadingSuggest() || !previewUrl"
+        (click)="askSuggestions()"
+      >
+        @if (loadingSuggest()) {
+          Analyzing selection…
+        } @else {
+          What can we design here?
+        }
+      </button>
+
+      <label class="variations">
+        Variations (after you choose an option)
         <select [(ngModel)]="variations" name="variations">
           <option [ngValue]="1">1 design</option>
           <option [ngValue]="2">2 designs</option>
@@ -64,11 +67,16 @@
         </select>
       </label>
 
-      <button class="cta" type="button" [disabled]="loading()" (click)="generate()">
-        @if (loading()) {
+      <button
+        class="cta"
+        type="button"
+        [disabled]="loadingGenerate() || !selectedOption()"
+        (click)="generate()"
+      >
+        @if (loadingGenerate()) {
           Generating…
         } @else {
-          Generate designs
+          Generate design
         }
       </button>
 
@@ -95,8 +103,43 @@
         <app-area-selector [imageUrl]="previewUrl" (selectionChange)="onSelectionChange($event)" />
       } @else {
         <div class="empty">
-          Upload a partially built house, elevation, or plot photo to begin.
+          Upload a construction photo, then drag to select the area you want to redesign.
         </div>
+      }
+
+      @if (suggestions(); as suggestion) {
+        <section class="suggest">
+          <div class="results__head">
+            <h2>What can we design here?</h2>
+            @if (suggestion.usedDemoMode) {
+              <span class="badge">Selection-based demo — add OpenAI key for vision analysis</span>
+            }
+          </div>
+          <p class="suggest__summary">{{ suggestion.summary }}</p>
+          @if (suggestion.regionInsight) {
+            <p class="suggest__insight">{{ suggestion.regionInsight }}</p>
+          }
+
+          <div class="options">
+            @for (option of suggestion.options; track option.id; let i = $index) {
+              <button
+                type="button"
+                class="option"
+                [class.option--active]="selectedOptionId() === option.id"
+                (click)="chooseOption(option)"
+              >
+                <strong>Option {{ i + 1 }} — {{ option.title }}</strong>
+                <span>{{ option.explanation }}</span>
+              </button>
+            }
+          </div>
+
+          @if (selectedOption(); as chosen) {
+            <p class="suggest__chosen">
+              Selected: <strong>{{ chosen.title }}</strong> — click <em>Generate design</em> to apply it only in the selected area.
+            </p>
+          }
+        </section>
       }
 
       @if (result(); as job) {
@@ -104,7 +147,7 @@
           <div class="results__head">
             <h2>Generated designs</h2>
             @if (job.usedDemoMode) {
-              <span class="badge">Demo overlay — add OpenAI key for real edits</span>
+              <span class="badge">Demo overlay — add OpenAI key for real image edits</span>
             }
           </div>
 
