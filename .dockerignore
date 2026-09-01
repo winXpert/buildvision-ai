@@ -1,0 +1,12 @@
+node_modules
+dist
+.angular
+**/bin
+**/obj
+**/App_Data
+**/.vs
+*.user
+.env
+.env.*
+appsettings.*.local.json
+sixlabors.lic

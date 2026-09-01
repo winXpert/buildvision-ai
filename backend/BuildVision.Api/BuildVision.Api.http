@@ -1,0 +1,6 @@
+@BuildVision.Api_HostAddress = http://localhost:5063
+
+GET {{BuildVision.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

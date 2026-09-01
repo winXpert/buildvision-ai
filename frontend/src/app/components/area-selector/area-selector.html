@@ -1,0 +1,23 @@
+<div class="selector">
+  <canvas
+    #canvas
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+  ></canvas>
+  @if (hasImage()) {
+    <div class="selector__hint">
+      <span>Drag to select the area to redesign</span>
+      <button
+        type="button"
+        class="linkish"
+        [disabled]="!hasSelection()"
+        (pointerdown)="$event.stopPropagation()"
+        (click)="clearSelection($event)"
+      >
+        Clear selection
+      </button>
+    </div>
+  }
+</div>

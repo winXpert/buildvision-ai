@@ -1,0 +1,153 @@
+<section class="designer">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark">BV</span>
+      <div>
+        <p class="brand__name">BuildVision AI</p>
+        <p class="brand__tag">Construction design from partial images</p>
+      </div>
+    </div>
+    <div class="mode" [class.mode--live]="aiMode() === 'openai'" [class.mode--demo]="aiMode() === 'demo'">
+      @if (aiMode() === 'openai') {
+        Live AI
+      } @else if (aiMode() === 'demo') {
+        Demo mode
+      } @else {
+        Connecting…
+      }
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>1. Project</h2>
+      <label>
+        Project name
+        <input [(ngModel)]="projectName" name="projectName" />
+      </label>
+
+      <h2>2. Upload</h2>
+      <label class="upload">
+        <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+        <span>Choose construction image</span>
+      </label>
+
+      <h2>3. Style presets</h2>
+      <p class="hint">For the right-side terrace — pick a look, then select that area on the image.</p>
+      <div class="styles">
+        @for (style of stylePresets; track style.id) {
+          <button
+            type="button"
+            class="style"
+            [class.style--active]="activeStyleId() === style.id"
+            (click)="applyStyle(style.id)"
+          >
+            <strong>{{ style.name }}</strong>
+            <span>{{ style.blurb }}</span>
+          </button>
+        }
+      </div>
+
+      <h2>4. Design brief</h2>
+      <label>
+        What should AI build in the selected area?
+        <textarea [(ngModel)]="prompt" name="prompt" rows="6" placeholder="Choose a style preset or write your own…"></textarea>
+      </label>
+
+      <label>
+        Variations
+        <select [(ngModel)]="variations" name="variations">
+          <option [ngValue]="1">1 design</option>
+          <option [ngValue]="2">2 designs</option>
+          <option [ngValue]="3">3 designs</option>
+          <option [ngValue]="4">4 designs</option>
+        </select>
+      </label>
+
+      <button class="cta" type="button" [disabled]="loading()" (click)="generate()">
+        @if (loading()) {
+          Generating…
+        } @else {
+          Generate designs
+        }
+      </button>
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      @if (history().length) {
+        <div class="history">
+          <h2>Recent</h2>
+          @for (item of history(); track item.id) {
+            <button type="button" class="history__item" (click)="loadHistoryItem(item)">
+              <strong>{{ item.projectName }}</strong>
+              <span>{{ item.prompt }}</span>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <main class="workspace">
+      <h2>Select area to redesign</h2>
+      @if (previewUrl) {
+        <app-area-selector [imageUrl]="previewUrl" (selectionChange)="onSelectionChange($event)" />
+      } @else {
+        <div class="empty">
+          Upload a partially built house, elevation, or plot photo to begin.
+        </div>
+      }
+
+      @if (result(); as job) {
+        <section class="results">
+          <div class="results__head">
+            <h2>Generated designs</h2>
+            @if (job.usedDemoMode) {
+              <span class="badge">Demo overlay — add OpenAI key for real edits</span>
+            }
+          </div>
+
+          <div class="compare">
+            <div class="compare__frame">
+              <img class="compare__before" [src]="fileUrl(job.originalImageUrl)" alt="Original construction" />
+              <img
+                class="compare__after-img"
+                [src]="activeResultUrl()"
+                alt="Generated design"
+                [style.clip-path]="'inset(0 ' + (100 - comparePosition()) + '% 0 0)'"
+              />
+              <div class="compare__divider" [style.left.%]="comparePosition()"></div>
+            </div>
+            <input
+              class="compare__slider"
+              type="range"
+              min="0"
+              max="100"
+              [value]="comparePosition()"
+              (input)="onCompareInput($event)"
+            />
+            <div class="compare__labels">
+              <span>Original</span>
+              <span>Design {{ selectedResultIndex() + 1 }}</span>
+            </div>
+          </div>
+
+          <div class="variants">
+            @for (url of job.resultImageUrls; track url; let i = $index) {
+              <button
+                type="button"
+                class="variant"
+                [class.variant--active]="selectedResultIndex() === i"
+                (click)="selectResult(i)"
+              >
+                <img [src]="fileUrl(url)" [alt]="'Design ' + (i + 1)" />
+                <span>Design {{ i + 1 }}</span>
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </main>
+  </div>
+</section>

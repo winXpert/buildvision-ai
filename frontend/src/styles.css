@@ -1,0 +1,36 @@
+:root {
+  color-scheme: dark;
+  --bg-0: #0a0d10;
+  --bg-1: #12161b;
+  --ink: #e8ecef;
+  --accent: #e8a45a;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-display: "Syne", "Manrope", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(232, 164, 90, 0.12), transparent 40%),
+    radial-gradient(ellipse at 90% 20%, rgba(70, 110, 140, 0.12), transparent 35%),
+    linear-gradient(165deg, #0a0d10 0%, #151a20 55%, #0d1115 100%);
+  color: var(--ink);
+}
+
+body {
+  background-attachment: fixed;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

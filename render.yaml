@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: buildvision-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: OpenAI__ApiKey
+        sync: false
+      - key: Cors__AllowedOrigins__0
+        value: https://buildvision-ai.onrender.com

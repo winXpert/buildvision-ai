@@ -1,0 +1,15 @@
+**/.vs/
+**/bin/
+**/obj/
+**/App_Data/
+**/node_modules/
+**/dist/
+**/.angular/
+**/wwwroot/
+/publish/
+*.user
+*.suo
+.env
+.env.*
+appsettings.*.local.json
+sixlabors.lic

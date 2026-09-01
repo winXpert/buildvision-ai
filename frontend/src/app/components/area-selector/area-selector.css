@@ -1,0 +1,40 @@
+.selector {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.selector canvas {
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  cursor: crosshair;
+  touch-action: none;
+  background: #1a1f24;
+  border: 1px solid rgba(232, 164, 90, 0.25);
+}
+
+.selector__hint {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  color: #a8b0b8;
+  font-size: 0.9rem;
+}
+
+.linkish {
+  background: none;
+  border: none;
+  color: #e8a45a;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.25rem 0;
+}
+
+.linkish:disabled {
+  color: #6a737b;
+  cursor: default;
+  text-decoration: none;
+}
